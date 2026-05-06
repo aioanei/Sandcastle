@@ -16,13 +16,17 @@ docker network inspect global_macvlan_net >/dev/null 2>&1 || \
 # Start the user app
 echo "Starting user application..."
 cd user_docker
-docker-compose up -d
+docker-compose -f user-docker-compose.yml up -d
 cd ..
 
 # Start the bot app
-echo "Starting bot application..."
+# Default to 5 bots if not specified as argument
+BOT_COUNT=${1:-5}
+echo "Starting $BOT_COUNT bot applications..."
 cd bot_docker
-docker-compose up -d
+# stop any existing orphans if the old service was running
+docker-compose -f bot1-docker-compose.yml down --remove-orphans >/dev/null 2>&1 || true
+docker-compose -f bot1-docker-compose.yml up -d --scale bot=$BOT_COUNT --remove-orphans
 cd ..
 
 # Start the AI Agent (if configured)

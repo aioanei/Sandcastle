@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  bot_worker:
+    image: vulnerable_web
+    networks:
+      - global_macvlan_net
+    command: ["/bin/bash", "-c", "while true; do curl -s --connect-timeout 2 http://192.168.100.1 > /dev/null; echo \"[Bot $$(hostname)] Requested user_app1\"; sleep $$((RANDOM % 3 + 1)); done"]
+
+networks:
+  global_macvlan_net:
+    external: true

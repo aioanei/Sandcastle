@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandcastle Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        .controls { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: #fff; font-size: 16px; margin-right: 10px; }
+        .btn-start { background-color: #28a745; }
+        .btn-start:hover { background-color: #218838; }
+        .btn-stop { background-color: #dc3545; }
+        .btn-stop:hover { background-color: #c82333; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: #fff; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .status-running { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Sandcastle Architecture Dashboard</h1>
+    
+    <div class="controls">
+        <label for="botsCount">Number of Bots:</label>
+        <input type="number" id="botsCount" value="5" min="1" max="50" style="padding: 5px; margin-right: 10px;">
+        <button class="btn btn-start" onclick="startContainers()">▶ Start Everything</button>
+        <button class="btn btn-stop" onclick="stopContainers()">⏹ Stop Everything</button>
+        <span id="action-status" style="margin-left: 20px; font-weight: bold;"></span>
+    </div>
+
+    <h2>Running Containers</h2>
+    <table id="containers-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Ports</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="4">Loading...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        function loadContainers() {
+            fetch('/api/containers')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#containers-table tbody');
+                    tbody.innerHTML = '';
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">No containers running.</td></tr>';
+                        return;
+                    }
+                    data.forEach(c => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${c.id}</td>
+                            <td>${c.name}</td>
+                            <td class="${c.status.includes('Up') ? 'status-running' : ''}">${c.status}</td>
+                            <td>${c.ports}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error(err));
+        }
+
+        function setStatus(msg, color) {
+            const el = document.getElementById('action-status');
+            el.innerText = msg;
+            el.style.color = color;
+            setTimeout(() => el.innerText = '', 5000);
+        }
+
+        function startContainers() {
+            const bots = document.getElementById('botsCount').value;
+            setStatus('Starting...', 'orange');
+            fetch('/api/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bots: bots })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    setStatus('Started successfully!', 'green');
+                    loadContainers();
+                } else {
+                    setStatus('Failed to start.', 'red');
+                }
+            })
+            .catch(err => setStatus('Error occurred.', 'red'));
+        }
+
+        function stopContainers() {
+            setStatus('Stopping...', 'orange');
+            fetch('/api/stop', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                setStatus('Stopped successfully!', 'green');
+                loadContainers();
+            })
+            .catch(err => setStatus('Error occurred.', 'red'));
+        }
+
+        // Auto-refresh the container list every 5 seconds
+        setInterval(loadContainers, 5000);
+        // Initial load
+        loadContainers();
+    </script>
+</body>
+</html>

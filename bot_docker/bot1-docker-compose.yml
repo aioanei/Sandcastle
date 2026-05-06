@@ -1,13 +1,9 @@
 version: "3.9"
 services:
-  bot1_app1:
+  bot:
     image: vulnerable_web
-    container_name: bot1_app1
     networks:
-      global_macvlan_net:
-        ipv4_address: 192.168.101.1
-    ports:
-      - "8082:80"
+      - global_macvlan_net
     volumes:
       - ./bot1_app1/html:/var/www/html:z
     command: ["/bin/bash", "-c", "while true; do curl -s http://192.168.100.1 > /dev/null; echo 'Request sent to 192.168.100.1'; sleep 2; done"]
