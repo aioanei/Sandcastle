@@ -25,4 +25,11 @@ cd bot_docker
 docker-compose up -d
 cd ..
 
+# Start the AI Agent (if configured)
+echo "Starting AI Agent Template..."
+cd agent_template
+# Uncomment the line below to automatically boot the AI agent if your API keys are set!
+# docker-compose up -d --build
+cd ..
+
 echo "Deployment complete! Use 'docker ps' to see running containers."

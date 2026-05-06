@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  ai_agent_1:
+    build: .
+    container_name: ai_agent_1
+    environment:
+      # Pass API keys here or via a .env file
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TARGET_URL=http://192.168.100.1
+      - TEAM_NAME=Alpha_Bot
+    networks:
+      global_macvlan_net:
+        # Give the agent a unique IP on the network
+        ipv4_address: 192.168.101.50
+
+networks:
+  global_macvlan_net:
+    external: true

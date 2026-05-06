@@ -1,9 +1,15 @@
-FROM ubuntu:18.04
-RUN apt update && apt install -y apache2 && apt install -y curl
-COPY vulnerable_index.html /var/www/html/index.html
+FROM python:3.10-slim
 
-# Redirect Apache logs to stdout and stderr
-RUN ln -sf /dev/stdout /var/log/apache2/access.log && \
-    ln -sf /dev/stderr /var/log/apache2/error.log
+WORKDIR /app
 
-CMD ["apachectl", "-D", "FOREGROUND"]
+RUN apt update && apt install -y curl
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy our Flask Python application
+COPY app.py .
+
+EXPOSE 80
+
+CMD ["python", "app.py"]
